@@ -42,10 +42,25 @@ public class TupleDesc implements Serializable {
      * */
     public Iterator<TDItem> iterator() {
         // some code goes here
-        return null;
+        return new Itr();
+    }
+
+    private class Itr implements Iterator<TDItem> {
+        int cursor = 0;
+        public boolean hasNext() {
+            return cursor < tdItems.length;
+        }
+        public TDItem next() {
+            int i = cursor;
+            if (i >= tdItems.length)
+                throw new NoSuchElementException();
+            cursor++;
+            return tdItems[i];
+        }
     }
 
     private static final long serialVersionUID = 1L;
+    private TDItem[] tdItems;
 
     /**
      * Create a new TupleDesc with typeAr.length fields with fields of the
@@ -60,6 +75,10 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // some code goes here
+        this.tdItems = new TDItem[typeAr.length];
+        for (int i=0; i<typeAr.length; i++) {
+            this.tdItems[i] = new TDItem(typeAr[i], fieldAr[i]);
+        }
     }
 
     /**
@@ -72,6 +91,10 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         // some code goes here
+        this.tdItems = new TDItem[typeAr.length];
+        for (int i=0; i<typeAr.length; i++) {
+            this.tdItems[i] = new TDItem(typeAr[i], null);
+        }
     }
 
     /**
@@ -79,7 +102,7 @@ public class TupleDesc implements Serializable {
      */
     public int numFields() {
         // some code goes here
-        return 0;
+        return tdItems.length;
     }
 
     /**
@@ -162,7 +185,21 @@ public class TupleDesc implements Serializable {
 
     public boolean equals(Object o) {
         // some code goes here
-        return false;
+        if (! (o instanceof TupleDesc))
+            return false;
+        TupleDesc td= (TupleDesc) o;
+        if (this.numFields() != td.numFields())
+            return false;
+        Iterator<TDItem> iter1 = this.iterator();
+        Iterator<TDItem> iter2 = td.iterator();
+        TDItem tdItem1, tdItem2;
+        while (iter1.hasNext()) {
+            tdItem1 = iter1.next();
+            tdItem2 = iter2.next();
+            if (tdItem1.fieldType != tdItem2.fieldType)
+                return false;
+        }
+        return true;
     }
 
     public int hashCode() {

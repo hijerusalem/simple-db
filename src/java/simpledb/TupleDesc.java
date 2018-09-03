@@ -116,7 +116,9 @@ public class TupleDesc implements Serializable {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         // some code goes here
-        return null;
+        if (i >= tdItems.length)
+            throw new NoSuchElementException();
+        return tdItems[i].fieldName;
     }
 
     /**
@@ -131,6 +133,8 @@ public class TupleDesc implements Serializable {
      */
     public Type getFieldType(int i) throws NoSuchElementException {
         // some code goes here
+        if (i >= tdItems.length)
+            throw new NoSuchElementException();
         return tdItems[i].fieldType;
     }
 

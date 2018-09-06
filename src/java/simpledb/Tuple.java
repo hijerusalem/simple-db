@@ -2,7 +2,7 @@ package simpledb;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
@@ -99,7 +99,21 @@ public class Tuple implements Serializable {
     public Iterator<Field> fields()
     {
         // some code goes here
-        return null;
+        return new Itr();
+    }
+
+    private class Itr implements Iterator<Field> {
+        int cursor = 0;
+        public boolean hasNext() {
+            return cursor < fields.length;
+        }
+        public Field next() {
+            int i = cursor;
+            if (i >= fields.length)
+                throw new NoSuchElementException();
+            cursor++;
+            return fields[i];
+        }
     }
 
     /**
@@ -108,5 +122,6 @@ public class Tuple implements Serializable {
     public void resetTupleDesc(TupleDesc td)
     {
         // some code goes here
+        this.td = td;
     }
 }

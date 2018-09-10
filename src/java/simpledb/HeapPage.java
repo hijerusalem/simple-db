@@ -282,7 +282,13 @@ public class HeapPage implements Page {
      */
     public int getNumEmptySlots() {
         // some code goes here
-        return 0;
+        int totalNum = tuples.length;
+        int emptyCount = 0;
+        for (int i = 0; i < totalNum; i++) {
+            if (!isSlotUsed(i))
+                emptyCount++;
+        }
+        return emptyCount;
     }
 
     /**
@@ -290,7 +296,9 @@ public class HeapPage implements Page {
      */
     public boolean isSlotUsed(int i) {
         // some code goes here
-        return false;
+        if (i >= tuples.length)
+            return false;
+        return (header[i>>3] & (1 << (i % 8))) == 1;
     }
 
     /**

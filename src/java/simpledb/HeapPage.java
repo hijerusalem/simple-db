@@ -320,7 +320,26 @@ public class HeapPage implements Page {
      */
     public Iterator<Tuple> iterator() {
         // some code goes here
-        return null;
+        return new Itr();
+    }
+
+    private class Itr implements Iterator<Tuple> {
+        int cursor = 0;
+        public boolean hasNext() {
+            return cursor < tuples.length && !isSlotUsed(cursor);
+        }
+
+        public Tuple next() {
+            int i = cursor;
+            if (cursor >= tuples.length)
+                throw new NoSuchElementException();
+            cursor++;
+            return tuples[i];
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

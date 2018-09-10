@@ -67,8 +67,9 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
-
+        int pageSize = BufferPool.getPageSize();
+        int tupleSize = td.getSize();
+        return (pageSize * 8) /  (tupleSize * 8 + 1);
     }
 
     /**
@@ -78,7 +79,11 @@ public class HeapPage implements Page {
     private int getHeaderSize() {        
         
         // some code goes here
-        return 0;
+        int numTuples = getNumTuples();
+        int numHeaderBytes = numTuples / 8;
+        if (numHeaderBytes * 8 < numTuples)
+            numHeaderBytes++;  //ceiling
+        return numHeaderBytes;
                  
     }
     
@@ -112,7 +117,7 @@ public class HeapPage implements Page {
      */
     public HeapPageId getId() {
     // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -298,7 +303,7 @@ public class HeapPage implements Page {
         // some code goes here
         if (i >= tuples.length)
             return false;
-        return (header[i>>3] & (1 << (i % 8))) == 1;
+        return (header[i>>3] & (1 << (i % 8))) > 0;
     }
 
     /**

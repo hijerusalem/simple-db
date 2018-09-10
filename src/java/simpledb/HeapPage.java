@@ -326,7 +326,13 @@ public class HeapPage implements Page {
     private class Itr implements Iterator<Tuple> {
         int cursor = 0;
         public boolean hasNext() {
-            return cursor < tuples.length && !isSlotUsed(cursor);
+            int numTuples = tuples.length;
+            while (cursor < numTuples) {
+                if (isSlotUsed(cursor))
+                    return true;
+                cursor++;
+            }
+            return false;
         }
 
         public Tuple next() {

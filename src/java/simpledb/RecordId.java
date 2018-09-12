@@ -71,7 +71,8 @@ public class RecordId implements Serializable {
     @Override
     public int hashCode() {
         // some code goes here
-        return Integer.parseInt(String.valueOf(pid.hashCode()) + String.valueOf(tupleno));
+        long hashCode = Long.parseLong(String.valueOf(pid.hashCode()) + String.valueOf(tupleno)) % Integer.MAX_VALUE;
+        return (int)hashCode;
     }
 
 }

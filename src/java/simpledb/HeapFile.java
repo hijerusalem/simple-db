@@ -22,8 +22,14 @@ public class HeapFile implements DbFile {
      *            the file that stores the on-disk backing store for this heap
      *            file.
      */
+
+    private File f;
+    private TupleDesc td;
+
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
+        this.f = f;
+        this.td = td;
     }
 
     /**
@@ -33,7 +39,7 @@ public class HeapFile implements DbFile {
      */
     public File getFile() {
         // some code goes here
-        return null;
+        return f;
     }
 
     /**
@@ -47,7 +53,7 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return f.getAbsoluteFile().hashCode();
     }
 
     /**
@@ -57,13 +63,34 @@ public class HeapFile implements DbFile {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return td;
+    }
+
+    public int pageSize() {
+        return BufferPool.getPageSize();
     }
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
         // some code goes here
-        return null;
+        BufferedInputStream bis = null;
+        try {
+            bis = new BufferedInputStream(new FileInputStream(f));
+            int pageSize = pageSize();
+            byte pageBuf[] = new byte[pageSize];
+            bis.skip(pid.getPageNumber()  * pageSize);
+            bis.read(pageBuf, 0, pageSize);
+            return new HeapPage((HeapPageId)pid, pageBuf);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                if (bis != null)
+                    bis.close();
+            } catch (IOException ioe) {
+                // Ignore failures closing the file
+            }
+        }
     }
 
     // see DbFile.java for javadocs
@@ -77,7 +104,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return 0;
+        return (int) (f.length() / pageSize());
     }
 
     // see DbFile.java for javadocs
@@ -99,7 +126,77 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
         // some code goes here
-        return null;
+        return new Itr();
+    }
+
+    private class Itr implements DbFileIterator {
+        int cursor = -1;
+        HeapPage currentPage = null;
+        Iterator<Tuple> currentTupleIterator = null;
+        TransactionId tid = null;
+        int tableid;
+        Boolean close = false;
+
+        public void open() throws DbException, TransactionAbortedException {
+            cursor = 0;
+            tableid = getId();
+            tid = new TransactionId();
+            HeapPageId hid = new HeapPageId(tableid, cursor);
+            try {
+                currentPage = (HeapPage) Database.getBufferPool().getPage(tid, hid, Permissions.READ_WRITE);
+                currentTupleIterator = currentPage.iterator();
+            } catch (Exception e) {
+                throw e;
+            }
+        }
+
+        public boolean hasNext() {
+            if (cursor == -1)
+                return false;
+
+            int numPages = numPages();
+            while (cursor < numPages) {
+                Boolean hasNext = currentTupleIterator.hasNext();
+                if (hasNext)
+                    return true;
+
+                cursor++;
+                HeapPageId hid = new HeapPageId(tableid, cursor);
+                try {
+                    currentPage = (HeapPage) Database.getBufferPool().getPage(tid, hid, Permissions.READ_WRITE);
+                } catch (Exception e) {
+                    return false;
+                }
+                currentTupleIterator = currentPage.iterator();
+            }
+
+            cursor = -1;
+            return false;
+        }
+
+        public Tuple next() {
+            if (cursor != -1)
+                return currentTupleIterator.next();
+            throw new NoSuchElementException();
+        }
+
+        public void rewind() throws DbException, TransactionAbortedException {
+            if (cursor == -1)
+                return;
+            cursor = 0;
+            HeapPageId hid = new HeapPageId(tableid, cursor);
+            try {
+                currentPage = (HeapPage) Database.getBufferPool().getPage(tid, hid, Permissions.READ_WRITE);
+            } catch (Exception e) {
+                throw e;
+            }
+            currentTupleIterator = currentPage.iterator();
+        }
+
+        public void close() {
+            cursor = -1;
+        }
+
     }
 
 }

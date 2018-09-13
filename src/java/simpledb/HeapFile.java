@@ -136,9 +136,11 @@ public class HeapFile implements DbFile {
         TransactionId tid = null;
         int tableid;
         Boolean close = false;
+        int numPages;
 
         public void open() throws DbException, TransactionAbortedException {
             cursor = 0;
+            numPages = numPages();
             tableid = getId();
             tid = new TransactionId();
             HeapPageId hid = new HeapPageId(tableid, cursor);
@@ -154,20 +156,23 @@ public class HeapFile implements DbFile {
             if (cursor == -1)
                 return false;
 
-            int numPages = numPages();
             while (cursor < numPages) {
+                if (currentPage == null) {
+                    HeapPageId hid = new HeapPageId(tableid, cursor);
+                    try {
+                        currentPage = (HeapPage) Database.getBufferPool().getPage(tid, hid, Permissions.READ_WRITE);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                    currentTupleIterator = currentPage.iterator();
+                }
+
                 Boolean hasNext = currentTupleIterator.hasNext();
                 if (hasNext)
                     return true;
 
+                currentPage = null;
                 cursor++;
-                HeapPageId hid = new HeapPageId(tableid, cursor);
-                try {
-                    currentPage = (HeapPage) Database.getBufferPool().getPage(tid, hid, Permissions.READ_WRITE);
-                } catch (Exception e) {
-                    return false;
-                }
-                currentTupleIterator = currentPage.iterator();
             }
 
             cursor = -1;

@@ -1,15 +1,9 @@
 simple-db
 =========
 
-Code for all 6.830 labs will be available in this repo. Once you have set up your class repo, you pull lab code from here.
+MIT数据库课程project。
 
-Directions for Repo Setup
--------------------------
+simple-db是一个用Java写的简单关系型数据库。
 
-Directions can be [here](https://github.com/MIT-DB-Class/course-info-2017)
-
-Lab Submission
------
-
-Instructions for labs (including how to submit answers) are [here](https://github.com/MIT-DB-Class/course-info-2017)
+该project就是为simple-db实现各种常用operator, 查询优化，索引，事务，事务回滚和故障恢复。
 

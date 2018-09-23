@@ -135,10 +135,11 @@ public class HeapFile implements DbFile {
         Iterator<Tuple> currentTupleIterator = null;
         TransactionId tid = null;
         int tableid;
-        Boolean close = false;
+        Boolean open = false;
         int numPages;
 
         public void open() throws DbException, TransactionAbortedException {
+            open = true;
             cursor = 0;
             numPages = numPages();
             tableid = getId();
@@ -153,7 +154,7 @@ public class HeapFile implements DbFile {
         }
 
         public boolean hasNext() {
-            if (cursor == -1)
+            if (!open)
                 return false;
 
             while (cursor < numPages) {
@@ -175,19 +176,20 @@ public class HeapFile implements DbFile {
                 cursor++;
             }
 
-            cursor = -1;
             return false;
         }
 
         public Tuple next() {
-            if (cursor != -1)
+            if (!open)
+                throw new NoSuchElementException();
+            if (cursor < numPages)
                 return currentTupleIterator.next();
             throw new NoSuchElementException();
         }
 
         public void rewind() throws DbException, TransactionAbortedException {
-            if (cursor == -1)
-                return;
+            if (!open)
+                throw new IllegalStateException("Heap file iterator not open yet");
             cursor = 0;
             HeapPageId hid = new HeapPageId(tableid, cursor);
             try {
@@ -199,7 +201,7 @@ public class HeapFile implements DbFile {
         }
 
         public void close() {
-            cursor = -1;
+            open = false;
         }
 
     }

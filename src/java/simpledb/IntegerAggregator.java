@@ -82,7 +82,10 @@ public class IntegerAggregator implements Aggregator {
                 map.put(key, currentAggregateVal);
                 break;
             case COUNT:
-                map.put(key, currentAggregateVal + 1);
+                if (currentAggregateVal != null)
+                    map.put(key, currentAggregateVal + 1);
+                else
+                    map.put(key, 1);
                 break;
             case AVG:
                 Integer count = countMap.get(key);

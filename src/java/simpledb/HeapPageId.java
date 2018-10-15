@@ -43,7 +43,7 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         // some code goes here
-        long hashCode = Long.parseLong( String.valueOf(tableId) + String.valueOf(pgNo)) %  Integer.MAX_VALUE;
+        long hashCode = Long.parseLong( String.valueOf(tableId) + String.valueOf(Math.abs(pgNo))) %  Integer.MAX_VALUE;
         return (int) hashCode;
     }
 

@@ -21,6 +21,7 @@ public class HeapPage implements Page {
 
     byte[] oldData;
     private final Byte oldDataLock=new Byte((byte)0);
+    private TransactionId dirtyTid;
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -250,6 +251,16 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        for (int i=0; i<numSlots; i++) {
+            if (tuples[i] == t) {
+                if (!isSlotUsed(i))
+                    throw new DbException("Slot already empty");
+                tuples[i] = null;
+                markSlotUsed(i, false);
+                return;
+            }
+        }
+        throw new DbException("Tuple doesn't exist in this page");
     }
 
     /**
@@ -262,6 +273,16 @@ public class HeapPage implements Page {
     public void insertTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        if (getNumEmptySlots() == 0)
+            throw new DbException("page full");
+        for (int i=0; i<numSlots; i++) {
+            if (!isSlotUsed(i)) {
+                t.setRecordId(new RecordId(pid, i));
+                tuples[i] = t;
+                markSlotUsed(i, true);
+                break;
+            }
+        }
     }
 
     /**
@@ -271,6 +292,10 @@ public class HeapPage implements Page {
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
 	// not necessary for lab1
+        if (dirty)
+            dirtyTid = tid;
+        else
+            dirtyTid = null;
     }
 
     /**
@@ -279,7 +304,7 @@ public class HeapPage implements Page {
     public TransactionId isDirty() {
         // some code goes here
 	// Not necessary for lab1
-        return null;      
+        return dirtyTid;
     }
 
     /**
@@ -312,6 +337,10 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+        if (value)
+            header[i>>3] |= 1 << (i%8);
+        else
+            header[i>>3] &= ~(1<<(i%8));
     }
 
     /**

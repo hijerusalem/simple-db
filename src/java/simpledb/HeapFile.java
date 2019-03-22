@@ -97,6 +97,26 @@ public class HeapFile implements DbFile {
     public void writePage(Page page) throws IOException {
         // some code goes here
         // not necessary for lab1
+        RandomAccessFile ras = null;
+        try {
+
+            ras = new RandomAccessFile(f, "rw");
+            int pageSize = pageSize();
+            byte pageData[] = page.getPageData();
+            int offset = page.getId().getPageNumber() * pageSize;
+            ras.seek(offset);
+            ras.write(pageData, 0, pageSize);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                if (ras != null)
+                    ras.close();
+            } catch (IOException ioe) {
+                // Ignore failures closing the file
+            }
+
+        }
     }
 
     /**
@@ -111,7 +131,29 @@ public class HeapFile implements DbFile {
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
         // some code goes here
-        return null;
+        int numPages = this.numPages();
+        HeapPage page = null;
+        for (int i=0; i<numPages; i++) {
+            page = (HeapPage)Database.getBufferPool().getPage(tid, new HeapPageId(this.getId(), i), Permissions.READ_WRITE);
+            if (page.getNumEmptySlots() > 0) {
+                break;
+            }
+        }
+        boolean newPage = false;
+        if (page.getNumEmptySlots() == 0) {
+            byte[] data = HeapPage.createEmptyPageData();
+            page = new HeapPage(new HeapPageId(this.getId(), numPages), data);
+            newPage = true;
+        }
+
+        page.insertTuple(t);
+        if (newPage) {
+            this.writePage(page);
+            return null;
+        }
+        ArrayList<Page> pages = new ArrayList<>();
+        pages.add(page);
+        return pages;
         // not necessary for lab1
     }
 
